@@ -58,7 +58,7 @@ export function MovieDisk({
     transform: [
       {
         translateY: withTiming(
-          isCurrentDiskFocused && isListStopped ? -DISK_COVER_SIZE / 2 : 0
+          isCurrentDiskFocused && isListStopped ? -DISK_SIZE / 2 : 0
         ),
       },
     ],
@@ -109,7 +109,7 @@ export function MovieDisk({
           style={{
             transform: [
               {
-                translateY: DISK_COVER_SIZE / 2 + 32,
+                translateY: DISK_COVER_SIZE + 32,
               },
             ],
           }}

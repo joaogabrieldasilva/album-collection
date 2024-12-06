@@ -4,6 +4,7 @@ import {
   DISK_GAP,
   DISK_SPACING,
 } from "@/src/constants/constants";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
@@ -85,7 +86,12 @@ export default function Index() {
   });
 
   return (
-    <View className="bg-[#292623] flex-1">
+    <LinearGradient
+      colors={["#3e3e3e", "#060606"]}
+      style={{
+        flex: 1,
+      }}
+    >
       <StatusBar style="light" />
       <Animated.FlatList
         data={albums}
@@ -115,7 +121,7 @@ export default function Index() {
             >
               <MovieDisk
                 onDiskPositionCalculated={({ y }) =>
-                  setDiskYPosition(y - DISK_COVER_SIZE / 2 + 12)
+                  setDiskYPosition(y - DISK_COVER_SIZE / 2 + 16)
                 }
                 isListStopped={isListStopped}
                 scrollX={scrollX}
@@ -128,6 +134,6 @@ export default function Index() {
           );
         }}
       />
-    </View>
+    </LinearGradient>
   );
 }

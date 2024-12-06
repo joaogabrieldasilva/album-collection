@@ -9,6 +9,7 @@ import { playSoundByDuration } from "@/src/utils/play-sound-by-duration";
 import { Ionicons } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
@@ -52,7 +53,7 @@ export default function Details() {
   const translateY = useSharedValueTransition({
     startValue: Number(params?.diskPositionY),
     endValue: END_TRANSLATE_Y,
-    duration: 400,
+    duration: 200,
     delay: 5,
     onEnd: () => {
       startRotation.value = true;
@@ -62,7 +63,7 @@ export default function Details() {
   const diskScale = useSharedValueTransition({
     startValue: 1,
     endValue: FINAL_SCALE,
-    duration: 400,
+    duration: 200,
     delay: 5,
   });
 
@@ -128,65 +129,72 @@ export default function Details() {
 
   console.log(startSound);
   return (
-    <SafeAreaView className="bg-[#292623] flex-1">
-      <Pressable
-        onPress={() => {
-          setIsGoingBack(true);
-          playSoundByDuration(endSound!, 600);
-          diskScale.value = withSpring(1, { overshootClamping: true });
-          translateY.value = withSpring(
-            Number(params?.diskPositionY),
-            { overshootClamping: true },
-            () => {
-              runOnJS(router.back)();
-            }
-          );
-        }}
-        className="m-4"
-      >
-        <Ionicons name="chevron-back" color="white" size={24} />
-      </Pressable>
-      <Animated.View style={[diskStyles, { position: "absolute" }]}>
-        <Image
-          source={{
-            uri: DISK_IMAGE_URL,
+    <LinearGradient
+      colors={["#3e3e3e", "#060606"]}
+      style={{
+        flex: 1,
+      }}
+    >
+      <SafeAreaView className="flex-1">
+        <Pressable
+          onPress={() => {
+            setIsGoingBack(true);
+            playSoundByDuration(endSound!, 600);
+            diskScale.value = withSpring(1, { overshootClamping: true });
+            translateY.value = withSpring(
+              Number(params?.diskPositionY),
+              { overshootClamping: true },
+              () => {
+                runOnJS(router.back)();
+              }
+            );
           }}
-          style={[
-            {
-              width: DISK_SIZE,
-              height: DISK_SIZE,
-            },
-          ]}
-          className="rounded-full"
-        />
-      </Animated.View>
-      {!isGoingBack ? (
-        <Animated.View
-          entering={FadeInDown.delay(500)}
-          exiting={FadeOutDown}
-          style={{
-            marginTop: DISK_SIZE * FINAL_SCALE + END_TRANSLATE_Y,
-          }}
+          className="m-4"
         >
-          <FlatList
-            data={songs}
-            contentContainerClassName="items-center gap-4"
-            showsVerticalScrollIndicator={false}
-            keyExtractor={(item) => item}
-            renderItem={({ item, index }) => (
-              <View>
-                <Text
-                  className={`font-bold text-xl ${
-                    index === 7 ? "text-white" : "text-[#47423b]"
-                  }`}
-                >
-                  {item}
-                </Text>
-              </View>
-            )}
+          <Ionicons name="chevron-back" color="white" size={24} />
+        </Pressable>
+        <Animated.View style={[diskStyles, { position: "absolute" }]}>
+          <Image
+            source={{
+              uri: DISK_IMAGE_URL,
+            }}
+            style={[
+              {
+                width: DISK_SIZE,
+                height: DISK_SIZE,
+              },
+            ]}
+            className="rounded-full"
           />
         </Animated.View>
-      ) : null}
-    </SafeAreaView>
+        {!isGoingBack ? (
+          <Animated.View
+            entering={FadeInDown.delay(500)}
+            exiting={FadeOutDown}
+            style={{
+              marginTop: DISK_SIZE * FINAL_SCALE + END_TRANSLATE_Y,
+            }}
+          >
+            <FlatList
+              data={songs}
+              contentContainerClassName="items-center gap-4"
+              showsVerticalScrollIndicator={false}
+              keyExtractor={(item) => item}
+              renderItem={({ item, index }) => (
+                <View>
+                  <Text
+                    className={`font-bold text-xl ${
+                      index === 7 ? "text-white" : "text-[#47423b]"
+                    }`}
+                  >
+                    {item}
+                  </Text>
+                </View>
+              )}
+            />
+          </Animated.View>
+        ) : null}
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
