@@ -7,15 +7,18 @@ import {
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import "../src/global.css";
+
+import { Image } from "expo-image";
 
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { DISK_IMAGE_URL } from "@/src/constants/constants";
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
@@ -32,6 +35,14 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
+  const [areImagesPrefetched, setAreImagesPrefetched] = useState(false);
+
+  useEffect(() => {
+    Image.prefetch(DISK_IMAGE_URL).then(() => {
+      setAreImagesPrefetched(true);
+    });
+  });
+
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -42,7 +53,7 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  if (!loaded) {
+  if (!loaded && areImagesPrefetched) {
     return null;
   }
 

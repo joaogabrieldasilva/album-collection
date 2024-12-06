@@ -1,30 +1,30 @@
+import {
+  DISK_IMAGE_URL,
+  DISK_SIZE,
+  DISK_SPACING,
+} from "@/src/constants/constants";
+import { useDiskSounds } from "@/src/hooks/use-disk-sounds";
+import { useSharedValueTransition } from "@/src/hooks/use-shared-value-transition";
+import { playSoundByDuration } from "@/src/utils/play-sound-by-duration";
 import { Ionicons } from "@expo/vector-icons";
-import { useIsFocused } from "@react-navigation/native";
-import { useAudioPlayer } from "expo-audio";
 import { Audio } from "expo-av";
+import { Image } from "expo-image";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useRef } from "react";
-import { Text } from "react-native";
-import { Dimensions, FlatList, Pressable, View } from "react-native";
+import { useRef, useState } from "react";
+import { FlatList, Pressable, Text, View } from "react-native";
 import Animated, {
   Easing,
   FadeInDown,
+  FadeOutDown,
+  FadeOutUp,
   runOnJS,
-  SlideInDown,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withRepeat,
-  withSequence,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const { width } = Dimensions.get("window");
-
-const ITEM_SIZE = width * 0.7;
-const SPACING = 32;
 
 const songs = [
   "Steel Song",
@@ -39,49 +39,70 @@ const songs = [
   "Home Again",
 ];
 
+const FINAL_SCALE = 0.6;
+const END_TRANSLATE_Y = 100;
+
 export default function Details() {
   const params = useLocalSearchParams<{
     diskPositionY: string;
   }>();
 
-  const countdown = useSharedValue(Number(params?.diskPositionY));
+  const [isGoingBack, setIsGoingBack] = useState(false);
+
+  const translateY = useSharedValueTransition({
+    startValue: Number(params?.diskPositionY),
+    endValue: END_TRANSLATE_Y,
+    duration: 400,
+    delay: 5,
+    onEnd: () => {
+      startRotation.value = true;
+    },
+  });
+
+  const diskScale = useSharedValueTransition({
+    startValue: 1,
+    endValue: FINAL_SCALE,
+    duration: 400,
+    delay: 5,
+  });
+
   const startRotation = useSharedValue(false);
-  const diskSound = useRef<Audio.Sound>();
   const musicRef = useRef<Audio.Sound>();
   const timeout = useRef<NodeJS.Timeout>();
+
+  const { startSound, endSound } = useDiskSounds();
 
   const diskStyles = useAnimatedStyle(() => ({
     transform: [
       {
-        translateY: countdown.value,
+        scale: diskScale.value,
       },
-      { translateX: (ITEM_SIZE * 0.7 + SPACING) / 2 - 6 },
       {
-        rotate: startRotation.value
-          ? withRepeat(
-              withTiming(360 + "deg", {
-                duration: 4000,
-                easing: Easing.linear,
-              }),
-              -1,
-              false
-            )
-          : "0deg",
+        translateY: translateY.value,
+      },
+      {
+        translateX: (DISK_SIZE / diskScale.value + DISK_SPACING) / 2 - 6,
+      },
+      {
+        rotate:
+          !isGoingBack && startRotation.value
+            ? withRepeat(
+                withTiming(360 + "deg", {
+                  duration: 4000,
+                  easing: Easing.linear,
+                }),
+                -1,
+                false
+              )
+            : withSpring("0deg"),
       },
     ],
   }));
 
   async function playSound() {
-    const { sound } = await Audio.Sound.createAsync(
-      require("../assets/audio.mp3"),
-      { shouldPlay: true },
-      () => {}
-    );
-
-    diskSound.current = sound;
+    playSoundByDuration(startSound!, 1500);
 
     timeout.current = setTimeout(async () => {
-      await sound.stopAsync();
       const { sound: music } = await Audio.Sound.createAsync(
         require("../assets/childhood.mp3"),
         { shouldPlay: true }
@@ -90,30 +111,30 @@ export default function Details() {
     }, 1500);
   }
 
-  useEffect(() => {
-    countdown.value = withDelay(
-      50,
-      withTiming(100, { duration: 400 }, () => {
-        startRotation.value = true;
-      })
-    );
-  }, []);
+  const stopAllSounds = () => {
+    startSound?.stopAsync();
+    musicRef.current?.stopAsync();
+  };
 
   useFocusEffect(() => {
+    stopAllSounds();
     playSound();
 
     return () => {
       clearTimeout(timeout.current);
-      diskSound.current?.stopAsync();
-      musicRef.current?.stopAsync();
+      stopAllSounds();
     };
   });
 
+  console.log(startSound);
   return (
     <SafeAreaView className="bg-[#292623] flex-1">
       <Pressable
         onPress={() => {
-          countdown.value = withSpring(
+          setIsGoingBack(true);
+          playSoundByDuration(endSound!, 600);
+          diskScale.value = withSpring(1, { overshootClamping: true });
+          translateY.value = withSpring(
             Number(params?.diskPositionY),
             { overshootClamping: true },
             () => {
@@ -125,43 +146,47 @@ export default function Details() {
       >
         <Ionicons name="chevron-back" color="white" size={24} />
       </Pressable>
-      <Animated.Image
-        source={{
-          uri: "https://i.pinimg.com/originals/52/d3/8b/52d38b4a6a2296d1ab78b485aaf16da6.png",
-        }}
-        style={[
-          diskStyles,
-          {
-            width: ITEM_SIZE * 0.7,
-            height: ITEM_SIZE * 0.7,
-          },
-        ]}
-        className="rounded-full absolute"
-      />
-      <Animated.View
-        entering={FadeInDown.delay(500)}
-        style={{
-          marginTop: ITEM_SIZE * 0.35 + 200,
-        }}
-      >
-        <FlatList
-          data={songs}
-          contentContainerClassName="items-center gap-4"
-          showsVerticalScrollIndicator={false}
-          keyExtractor={(item) => item}
-          renderItem={({ item, index }) => (
-            <View>
-              <Text
-                className={`font-bold text-xl ${
-                  index === 7 ? "text-white" : "text-[#47423b]"
-                }`}
-              >
-                {item}
-              </Text>
-            </View>
-          )}
+      <Animated.View style={[diskStyles, { position: "absolute" }]}>
+        <Image
+          source={{
+            uri: DISK_IMAGE_URL,
+          }}
+          style={[
+            {
+              width: DISK_SIZE,
+              height: DISK_SIZE,
+            },
+          ]}
+          className="rounded-full"
         />
       </Animated.View>
+      {!isGoingBack ? (
+        <Animated.View
+          entering={FadeInDown.delay(500)}
+          exiting={FadeOutDown}
+          style={{
+            marginTop: DISK_SIZE * FINAL_SCALE + END_TRANSLATE_Y,
+          }}
+        >
+          <FlatList
+            data={songs}
+            contentContainerClassName="items-center gap-4"
+            showsVerticalScrollIndicator={false}
+            keyExtractor={(item) => item}
+            renderItem={({ item, index }) => (
+              <View>
+                <Text
+                  className={`font-bold text-xl ${
+                    index === 7 ? "text-white" : "text-[#47423b]"
+                  }`}
+                >
+                  {item}
+                </Text>
+              </View>
+            )}
+          />
+        </Animated.View>
+      ) : null}
     </SafeAreaView>
   );
 }

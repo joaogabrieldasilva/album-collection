@@ -1,27 +1,17 @@
-import { router, useFocusEffect } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useState } from "react";
+import { MovieDisk } from "@/src/components/movie-disk/movie-disk";
 import {
-  Dimensions,
-  FlatList,
-  Image,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+  DISK_COVER_SIZE,
+  DISK_GAP,
+  DISK_SPACING,
+} from "@/src/constants/constants";
+import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useState } from "react";
+import { Dimensions, Pressable, View } from "react-native";
 import Animated, {
-  Extrapolation,
-  interpolate,
-  measure,
   runOnJS,
-  runOnUI,
-  SharedValue,
-  useAnimatedReaction,
-  useAnimatedRef,
   useAnimatedScrollHandler,
-  useAnimatedStyle,
   useSharedValue,
-  withTiming,
 } from "react-native-reanimated";
 
 const albums = [
@@ -74,12 +64,6 @@ const albums = [
   },
 ];
 
-const { width, height } = Dimensions.get("window");
-
-const ITEM_SIZE = width * 0.7;
-const SPACING = 32;
-const GAP = 16;
-
 export default function Index() {
   const scrollX = useSharedValue(0);
 
@@ -88,7 +72,7 @@ export default function Index() {
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (e) => {
-      scrollX.value = e.contentOffset.x / (ITEM_SIZE + SPACING / 2);
+      scrollX.value = e.contentOffset.x / (DISK_COVER_SIZE + DISK_SPACING / 2);
 
       console.log(scrollX.value);
     },
@@ -109,13 +93,13 @@ export default function Index() {
         keyExtractor={(_, index) => String(index)}
         contentContainerClassName="items-center"
         contentContainerStyle={{
-          gap: GAP,
-          paddingHorizontal: SPACING * 2,
+          gap: DISK_GAP,
+          paddingHorizontal: DISK_SPACING * 2,
         }}
         scrollEventThrottle={16}
         onScroll={scrollHandler}
         showsHorizontalScrollIndicator={false}
-        snapToInterval={ITEM_SIZE + SPACING - GAP}
+        snapToInterval={DISK_COVER_SIZE + DISK_SPACING - DISK_GAP}
         decelerationRate="fast"
         renderItem={({ item, index }) => {
           return (
@@ -131,7 +115,7 @@ export default function Index() {
             >
               <MovieDisk
                 onDiskPositionCalculated={({ y }) =>
-                  setDiskYPosition(y - ITEM_SIZE / 2 + 12)
+                  setDiskYPosition(y - DISK_COVER_SIZE / 2 + 12)
                 }
                 isListStopped={isListStopped}
                 scrollX={scrollX}
@@ -144,126 +128,6 @@ export default function Index() {
           );
         }}
       />
-    </View>
-  );
-}
-
-type MovieDiskProps = {
-  index: number;
-  isListStopped: boolean;
-  scrollX: SharedValue<number>;
-  title: string;
-  year: number;
-  coverImageUrl: string;
-  onDiskPositionCalculated: (positions: { x: number; y: number }) => void;
-};
-
-function MovieDisk({
-  title,
-  year,
-  coverImageUrl,
-  index,
-  scrollX,
-  isListStopped,
-  onDiskPositionCalculated,
-}: MovieDiskProps) {
-  const diskRef = useAnimatedRef<Animated.Image>();
-  const isCurrentDiskFocused = scrollX.value === index;
-
-  const stylez = useAnimatedStyle(() => ({
-    transform: [
-      {
-        scale: interpolate(
-          scrollX.value,
-          [index - 1, index, index + 1],
-          [0.8, 1, 0.8],
-          Extrapolation.CLAMP
-        ),
-      },
-    ],
-  }));
-
-  console.log(scrollX.value);
-
-  const cdStyles = useAnimatedStyle(() => ({
-    transform: [
-      {
-        translateY: withTiming(
-          isCurrentDiskFocused && isListStopped ? -ITEM_SIZE / 2 : 0
-        ),
-      },
-    ],
-  }));
-
-  function calculateDiskPosition() {
-    "worklet";
-    try {
-      const measures = measure(diskRef);
-      runOnJS(onDiskPositionCalculated)({
-        x: measures?.pageX!,
-        y: measures?.pageY!,
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  return (
-    <View>
-      <Animated.View
-        style={[
-          {
-            width: ITEM_SIZE,
-            height: ITEM_SIZE,
-          },
-          stylez,
-        ]}
-        className="items-center justify-center"
-      >
-        <Animated.Image
-          ref={diskRef}
-          onLayout={runOnUI(calculateDiskPosition)}
-          source={{
-            uri: coverImageUrl,
-          }}
-          style={[
-            {
-              width: ITEM_SIZE,
-              height: ITEM_SIZE,
-            },
-          ]}
-        />
-
-        <Animated.View
-          className="absolute"
-          style={{
-            transform: [
-              {
-                translateY: ITEM_SIZE / 2 + 32,
-              },
-            ],
-          }}
-        >
-          <Text className="text-lg font-bold text-white text-center mt-4 mb-2">
-            {title}
-          </Text>
-          <Text className="text-md text-white text-center">{year}</Text>
-        </Animated.View>
-        <Animated.Image
-          source={{
-            uri: "https://i.pinimg.com/originals/52/d3/8b/52d38b4a6a2296d1ab78b485aaf16da6.png",
-          }}
-          style={[
-            cdStyles,
-            {
-              width: ITEM_SIZE * 0.7,
-              height: ITEM_SIZE * 0.7,
-              zIndex: -1,
-            },
-          ]}
-          className="rounded-full absolute"
-        />
-      </Animated.View>
     </View>
   );
 }
