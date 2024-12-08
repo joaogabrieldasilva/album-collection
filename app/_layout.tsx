@@ -19,6 +19,7 @@ import {
 } from "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { DISK_IMAGE_URL } from "@/src/constants/constants";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
@@ -59,12 +60,14 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen
-          name="details"
-          options={{ animation: "none", gestureEnabled: false }}
-        />
-      </Stack>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen
+            name="details"
+            options={{ animation: "none", gestureEnabled: false }}
+          />
+        </Stack>
+      </GestureHandlerRootView>
     </SafeAreaProvider>
   );
 }

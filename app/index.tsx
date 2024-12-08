@@ -4,6 +4,7 @@ import {
   DISK_GAP,
   DISK_SPACING,
 } from "@/src/constants/constants";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -14,6 +15,8 @@ import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
 } from "react-native-reanimated";
+
+import * as Haptics from "expo-haptics";
 
 const albums = [
   {
@@ -111,19 +114,21 @@ export default function Index() {
           return (
             <Pressable
               onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+
                 router.navigate({
                   pathname: "/details",
                   params: {
                     diskPositionY: diskYPosition,
+                    albumTitle: item.title,
                   },
                 });
               }}
             >
               <MovieDisk
                 onDiskPositionCalculated={({ y }) =>
-                  setDiskYPosition(y - DISK_COVER_SIZE / 2 + 16)
+                  setDiskYPosition(y - DISK_COVER_SIZE / 2 + 54 - 32)
                 }
-                isListStopped={isListStopped}
                 scrollX={scrollX}
                 index={index}
                 title={item.title}

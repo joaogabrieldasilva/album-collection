@@ -17,9 +17,10 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import { useEffect } from "react";
+
 type MovieDiskProps = {
   index: number;
-  isListStopped: boolean;
   scrollX: SharedValue<number>;
   title: string;
   year: number;
@@ -33,11 +34,9 @@ export function MovieDisk({
   coverImageUrl,
   index,
   scrollX,
-  isListStopped,
   onDiskPositionCalculated,
 }: MovieDiskProps) {
   const diskRef = useAnimatedRef<View>();
-  const isCurrentDiskFocused = scrollX.value === index;
 
   const stylez = useAnimatedStyle(() => ({
     transform: [
@@ -52,13 +51,14 @@ export function MovieDisk({
     ],
   }));
 
-  console.log(scrollX.value);
-
   const cdStyles = useAnimatedStyle(() => ({
     transform: [
       {
-        translateY: withTiming(
-          isCurrentDiskFocused && isListStopped ? -DISK_SIZE / 2 : 0
+        translateY: interpolate(
+          scrollX.value,
+          [index - 1, index - 0.2, index, index + 0.2, index + 1],
+          [0, 0, -DISK_SIZE / 2 - 32, 0, 0],
+          Extrapolation.CLAMP
         ),
       },
     ],
@@ -105,19 +105,19 @@ export function MovieDisk({
         </Animated.View>
 
         <Animated.View
-          className="absolute"
+          className="absolute items-center"
           style={{
             transform: [
               {
-                translateY: DISK_COVER_SIZE + 32,
+                translateY: DISK_COVER_SIZE / 2 + 64,
               },
             ],
           }}
         >
-          <Text className="text-lg font-bold text-white text-center mt-4 mb-2">
+          <Text className="text-lg font-bold text-white mt-4 mb-2">
             {title}
           </Text>
-          <Text className="text-md text-white text-center">{year}</Text>
+          <Text className="text-md text-white">{year}</Text>
         </Animated.View>
         <Animated.View style={[cdStyles, { zIndex: -1, position: "absolute" }]}>
           <Image
