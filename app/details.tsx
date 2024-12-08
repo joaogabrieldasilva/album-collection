@@ -19,6 +19,7 @@ import {
   Pressable,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 import Animated, {
@@ -166,7 +167,7 @@ export default function Details() {
     return () => {
       clearTimeout(timeout.current);
     };
-  }, []);
+  }, [startSound]);
 
   const durationTextProps = useAnimatedProps(() => {
     const seconds = Math.ceil(duration.value / 1000);
@@ -191,9 +192,11 @@ export default function Details() {
   const panGesture = Gesture.Pan()
     .onBegin(() => {
       musicRef.current?.pauseAsync();
+      setIsPlaying(false);
     })
     .onEnd(() => {
       musicRef.current?.playFromPositionAsync(Math.max(0, duration.value));
+      setIsPlaying(true);
     })
     .onUpdate(({ x }) => {
       "worklet";
@@ -294,15 +297,15 @@ export default function Details() {
               />
             </View>
             <View className="flex-row items-center self-center mb-8 mt-4 gap-4">
-              <Pressable
+              <TouchableOpacity
                 className="size-12 rounded-full items-center justify-center"
                 onPress={() => {
                   musicRef.current?.replayAsync();
                 }}
               >
                 <Ionicons name="play-skip-back" size={20} color="white" />
-              </Pressable>
-              <Pressable
+              </TouchableOpacity>
+              <TouchableOpacity
                 className="bg-white size-16 rounded-full items-center justify-center"
                 onPress={() => {
                   if (isPlaying) {
@@ -315,8 +318,8 @@ export default function Details() {
                 }}
               >
                 <Ionicons name={isPlaying ? "pause" : "play"} size={24} />
-              </Pressable>
-              <Pressable
+              </TouchableOpacity>
+              <TouchableOpacity
                 className=" size-12 rounded-full items-center justify-center"
                 onPress={() => {
                   musicRef.current?.stopAsync();
@@ -324,7 +327,7 @@ export default function Details() {
                 }}
               >
                 <Ionicons name="play-skip-forward" size={20} color="white" />
-              </Pressable>
+              </TouchableOpacity>
             </View>
             <FlatList
               data={songs}
